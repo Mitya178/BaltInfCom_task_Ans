@@ -1,0 +1,60 @@
+- name: Install and configure OpenLDAP server in Ubuntu
+  hosts: localhost
+  become: true
+  vars:
+    admin_user_password: admin123
+    domain_example: BaltInfo.com
+    organization: BaltInfoCom
+    username1: user1
+    userpassword1: user1
+    username2: user2
+    userpassword2: user2
+
+  tasks:
+    - name: Install OpenLDAP packages
+      apt:
+        name:
+          - slapd
+          - ldap-utils
+        state: present
+
+    - name: Select password to Admin
+      debconf:
+        name: slapd/password1
+        question: slapd/password1
+        value: "{{ admin_user_password }}"
+        vtype: password
+
+    - name: Set Domain and Organization
+      debconf:
+        name: slapd/domain
+        question: slapd/domain
+        value: "{{ domain_example }}"
+
+      debconf:
+        name: slapd/organization
+        question: slapd/organization
+        value: "{{ organization }}"
+        vtype: string
+
+    - name: Restart slapd
+      service:
+        name: slapd
+        state: restarted
+
+    - name: Add user to ldap
+      ldap_entry:
+        dn: "cn=User1,dc=BaltInfo,dc=com"
+        objectClass:
+            - "Person"
+        attributes:
+          cn: "User1"
+          sn: "User1"
+          givenName: "User1"
+          userPassword: "User1_Password"
+        state: present
+
+    - name: Restart slapd
+      service:
+        name: slapd
+        state: restarted
